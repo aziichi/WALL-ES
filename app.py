@@ -18,6 +18,10 @@ load_dotenv()
 
 app.secret_key = os.getenv('SECRET_KEY')
 
+admin_username = os.getenv('ADMIN_USERNAME')
+admin_email = os.getenv('ADMIN_EMAIL')
+admin_password = os.getenv('ADMIN_PASSWORD')
+
 class Users(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, nullable=False)
@@ -26,11 +30,20 @@ class Users(db.Model):
     isAdmin = db.Column(db.Boolean, default=False)
 
 class Images(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.ForeignKey(Users.id), primary_key=True, nullable=False)
     image_url = db.Column(db.String, primary_key=True, nullable=False)
 
 with app.app_context():
     db.create_all()
+    try:
+        result = db.session.execute(db.select(Users).filter_by(username=admin_username, email=admin_email, password=admin_password))
+        user = result.scalar_one()
+    except:    
+        user = Users(id=1, username=admin_username, email=admin_email, password=admin_password, isAdmin=True)
+        db.session.add(user)
+        db.session.commit()
+
 
 @app.route("/")
 def home():
@@ -51,7 +64,11 @@ def signup_view():
         email = request.form.get('email')
         password = request.form.get('password')
 
-        user = Users(username=name, email=email, password=password)
+        id = db.session.execute(db.select(Users).order_by(Users.id)).all()
+        max_id = 0
+        for id in id:
+            max_id = max(id.Users.id, max_id)
+        user = Users(id=max_id+1 ,username=name, email=email, password=password)
         db.session.add(user)
         db.session.commit()
     return render_template("sign_up_and_signin.html")
@@ -84,7 +101,7 @@ def signin_view():
 def logout_view():
     if('user' in session):
         session['user'] = None
-        return render_template("sign_up_and_signin.html")
+        return redirect('/')
 
 
 def allowed_file(filename):
@@ -104,8 +121,15 @@ def upload_file():
                 return redirect(request.url)
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
-                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                image = Images(user_id=session['userId'], image_url=os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                
+                id = db.session.execute(db.select(Images).order_by(Images.id)).all()
+                max_id = 0
+
+                for id in id:
+                    max_id = max(id.Images.id, max_id)
+
+                image = Images(id=max_id+1, user_id=session['userId'], image_url=os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], f"{filename[:-4]}_{image.id}.{filename[-3:]}"))
                 db.session.add(image)
                 db.session.commit()
                 return redirect(request.url)
@@ -114,12 +138,13 @@ def upload_file():
 @app.route('/delete/<string:name>', methods=['GET', "POST"])
 def delete_file(name):
     if 'user' in session and session['user'] != None and session['isAdmin'] == True:
-        image_name = name.split('$')[0]
-        user_id = name.split('$')[1]
+        image_name = name.split('&')[0]
+        user_id = name.split('&')[1]
+        image_id = name.split('&')[2]
         image_url = os.path.join(app.config['UPLOAD_FOLDER'], image_name)
-        result = db.session.execute(db.select(Images).filter_by(user_id = user_id, image_url = image_url))
+        result = db.session.execute(db.select(Images).filter_by(id=image_id, user_id = user_id, image_url = image_url))
         image = result.scalar_one()
+        os.remove(f"{image_url[:-4]}_{image.id}.{image_url[-3:]}")
         db.session.delete(image)
         db.session.commit()
-        os.remove(image_url)
     return redirect('/')
