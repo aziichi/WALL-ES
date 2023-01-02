@@ -5,7 +5,7 @@ import os
 from dotenv import load_dotenv
 
 
-UPLOAD_FOLDER = './static/images'
+UPLOAD_FOLDER = os.path.join(os.path.curdir, 'static', 'images')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 app = Flask(__name__)
@@ -31,8 +31,8 @@ class Users(db.Model):
 
 class Images(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.ForeignKey(Users.id), primary_key=True, nullable=False)
-    image_url = db.Column(db.String, primary_key=True, nullable=False)
+    user_id = db.Column(db.ForeignKey(Users.id), nullable=False)
+    image_url = db.Column(db.String, nullable=False)
 
 with app.app_context():
     db.create_all()
@@ -135,16 +135,15 @@ def upload_file():
                 return redirect(request.url)
     return redirect('/')
 
-@app.route('/delete/<string:name>', methods=['GET', "POST"])
-def delete_file(name):
+@app.route('/delete/<int:pk>', methods=['GET', "POST"])
+def delete_file(pk):
     if 'user' in session and session['user'] != None and session['isAdmin'] == True:
-        image_name = name.split('&')[0]
-        user_id = name.split('&')[1]
-        image_id = name.split('&')[2]
-        image_url = os.path.join(app.config['UPLOAD_FOLDER'], image_name)
-        result = db.session.execute(db.select(Images).filter_by(id=image_id, user_id = user_id, image_url = image_url))
-        image = result.scalar_one()
-        os.remove(f"{image_url[:-4]}_{image.id}.{image_url[-3:]}")
-        db.session.delete(image)
-        db.session.commit()
+        try:
+            result = db.session.execute(db.select(Images).filter_by(id=pk))
+            image = result.scalar_one()
+            os.remove(f"{image.image_url[:-4]}_{image.id}.{image.image_url[-3:]}")
+            db.session.delete(image)
+            db.session.commit()
+        except:
+            pass
     return redirect('/')

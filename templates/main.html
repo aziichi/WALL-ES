@@ -25,14 +25,14 @@
             </div>
         </nav>
         
-        <div class="text">Desktop Organizers</div>
+        <div class="text">Wallpapers</div>
         <div class="images">
             {% for image in images %}
             <div class="imag">
                 <img src={{image.image_url[:-4]}}_{{image.id}}.{{image.image_url[-3:]}} alt="" class="wall" width="60%" onclick="showImg(this.src,720,1280,'Image');">
                 <div class="btn"><a class="download" href={{image.image_url[:-4]}}_{{image.id}}.{{image.image_url[-3:]}} download>Download</a></div>
                 {% if session.isAdmin %}
-                <a href="/delete/{{image.image_url.split('/')[3]}}&{{image.user_id}}&{{image.id}}"><div class="delete">&times;</div></a>
+                <a href="/delete/{{image.id}}"><div class="delete">&times;</div></a>
                 {% endif %}
             </div>
             {% endfor %}
