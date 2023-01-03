@@ -6,6 +6,10 @@ from dotenv import load_dotenv
 
 
 UPLOAD_FOLDER = os.path.join(os.path.curdir, 'static', 'images')
+
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 app = Flask(__name__)
