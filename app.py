@@ -71,6 +71,8 @@ def signup_view():
         id = db.session.execute(db.select(Users).order_by(Users.id)).all()
         max_id = 0
         for id in id:
+            if id.Users.email == email:
+                return render_template("sign_up_and_signin.html", status_code=500)
             max_id = max(id.Users.id, max_id)
         user = Users(id=max_id+1 ,username=name, email=email, password=password)
         db.session.add(user)

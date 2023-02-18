@@ -11,18 +11,22 @@
     <title>Sign in & Sign up Form</title>
   </head>
   <body>
+    {% if status_code == 500 %}
+    <div class="container sign-up-mode">
+    {% else %}
     <div class="container">
+    {% endif %}
       <div class="forms-container">
         <div class="signin-signup">
           <form action="/signin" method="post" class="sign-in-form">
             <h2 class="title">Sign in</h2>
             <div class="input-field">
               <i class="fas fa-user"></i>
-              <input type="text" placeholder="Email" name="email" />
+              <input type="email" placeholder="Email" name="email" required/>
             </div>
             <div class="input-field">
               <i class="fas fa-lock"></i>
-              <input type="password" placeholder="Password" name="password" />
+              <input type="password" placeholder="Password" name="password" required/>
             </div>
             {% if status_code == 404 %}
             <p class="warning-msg show">Incorrect Email or Password. Please try again.</p>
@@ -58,6 +62,9 @@
               <i class="fas fa-lock"></i>
               <input type="password" placeholder="Password" name="password"/>
             </div>
+            {% if status_code == 500 %}
+            <p class="warning-msg show">User already registered with this email. Please use a different email</p>
+            {% endif %}
             <input type="submit" class="btn" value="Sign up" />
             <p class="social-text">Or Sign up with social platforms</p>
             <div class="social-media">
